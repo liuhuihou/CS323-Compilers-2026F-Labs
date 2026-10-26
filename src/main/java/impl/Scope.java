@@ -37,6 +37,11 @@ public class Scope {
         //TODO:
         //If the current scope does not contain Variable, create one and add it to the current Scope;
         // otherwise, return null.
+        VariableSymbol variableSymbol = new VariableSymbol(name, type);
+        if (variables.get(name) == null) {
+            variables.put(name, variableSymbol);
+            return variableSymbol;
+        }
         return null;
     }
 
@@ -45,6 +50,15 @@ public class Scope {
         // TODO：
         // If the current scope does not contain a Function, create one and add it to the current Scope;
         // otherwise, return null
+        FunctionSymbol newFunction = new FunctionSymbol(name,returnType,this);
+        if (functions.get(name) == null) {
+            functions.put(name, newFunction);
+            for (VariableSymbol param : params) {
+                newFunction.addParameter(param);
+            }
+
+            return newFunction;
+        }
         return null;
     }
 
@@ -53,7 +67,20 @@ public class Scope {
         //Find name in the current scope; if it exists, return the corresponding VariableSymbol.
         // If it does not exist, search in the parent scope
         // If it cannot be found, return null.
-        return null;
+
+        return recursiveFindVariable(name,this);
+    }
+
+    private VariableSymbol recursiveFindVariable(String name, Scope scope) {
+        if (scope == null) {
+            return null;
+        }
+        if (scope.variables.containsKey(name)){
+            return scope.variables.get(name);
+        }else{
+            return recursiveFindVariable(name, scope.parent);
+        }
+        
     }
 
     public VariableSymbol lookupCurrentVariable(String name) {
@@ -65,6 +92,18 @@ public class Scope {
         //Find name in the current scope; if it exists, return the corresponding FunctionSymbol.
         // If it does not exist, search in the parent scope
         // If it cannot be found, return null.
-        return null;
+        return recursiveFindFunction(name, this);
+    }
+
+    private FunctionSymbol recursiveFindFunction(String name, Scope scope) {
+        if (scope == null) {
+            return null;
+        }
+        if (scope.functions.containsKey(name)){
+            return scope.functions.get(name);
+        }else{
+            return recursiveFindFunction(name, scope.parent);
+        }
+        
     }
 }

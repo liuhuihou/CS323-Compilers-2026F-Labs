@@ -7,6 +7,7 @@ import impl.symbol.VariableSymbol;
 import impl.type.PrimitiveType;
 import impl.type.Type;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,13 +58,61 @@ public class Lab6Visitor extends SplcBaseVisitor<Void> {
     //Function Define:
     private void visitFuncDef(SplcParser.GlobalDefContext ctx) {
         //TODO: Finish Base2 here: Redeclaration Error
+        
+        if (currentScope.getFunctions().containsKey(ctx.Identifier().getText())) {
+            SplcSemanticError error = SplcSemanticError.redeclaration(ctx.Identifier());
+            errors.add(error);
+            return;
+        } else {
+            ArrayList<VariableSymbol> params = new ArrayList<>();
+            Scope enclosingScope = currentScope;
+            for (int i = 0; i < ctx.funcArgs().Identifier().size(); i++) {
+                String paramName = ctx.funcArgs().Identifier(i).getText();
+                VariableSymbol paramSymbol =
+                        new VariableSymbol(paramName, resolveType(ctx.funcArgs().specifier(i)));
+                if (params.stream().anyMatch(param -> param.getName().equals(paramName))) {
+                    SplcSemanticError error =
+                            SplcSemanticError.redefinition(ctx.funcArgs().Identifier(i));
+                    errors.add(error);
+                }
+                params.add(paramSymbol);
+            }
+            FunctionSymbol functionSymbol  = currentScope.defineFunction(ctx.Identifier().getText(), resolveType(ctx.specifier()),params);
+            currentScope = functionSymbol;
 
+            for (int i = 0; i < ctx.statement().size(); i++) {
+                visit(ctx.statement(i));
+            }
+
+            currentScope = enclosingScope;
+            return;
+        }
     }
 
+    @Override
+    public Void visitLocalVariableStmt(SplcParser.LocalVariableStmtContext ctx) {
+        if (currentScope.getVariables().containsKey(ctx.Identifier().getText())) {
+            errors.add(SplcSemanticError.redefinition(ctx.Identifier()));
+        } else {
+            currentScope.defineVariable(
+                    ctx.Identifier().getText(), resolveType(ctx.specifier()));
+        }
+        return visitChildren(ctx);
+    }
 
     //Variable Declare:
     private void visitVariableDec(SplcParser.GlobalDefContext ctx) {
         //TODO: Finish Base1: Redefinition Error
+        if(currentScope.getVariables().containsKey(ctx.Identifier().getText())) {
+            SplcSemanticError error = SplcSemanticError.redefinition(ctx.Identifier());
+            errors.add(error);
+            return;
+        } else {
+            currentScope.defineVariable(ctx.Identifier().getText(), resolveType(ctx.specifier()));
+        }
+
+        
+            
     }
 
     private Type resolveType(SplcParser.SpecifierContext ctx) {
@@ -75,5 +124,7 @@ public class Lab6Visitor extends SplcBaseVisitor<Void> {
             return PrimitiveType.VOID;
         }
     }
+
+    
 
 }

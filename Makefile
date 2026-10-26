@@ -1,5 +1,6 @@
 ANTLR_JAR  := libs/antlr-4.13.2-complete.jar
 OUTPUT_DIR := src/main/java/generated
+BUILD_DIR  := build/classes
 
 GRAMMARS := $(basename $(wildcard *.g4))
 
@@ -21,4 +22,8 @@ clean:
 jar:
 	mvn jar:jar
 
+run: all
+	mkdir -p $(BUILD_DIR)
+	javac -cp $(ANTLR_JAR) -d $(BUILD_DIR) $$(find src/main/java -name '*.java')
+	java -cp "$(BUILD_DIR):$(ANTLR_JAR)" Main
 
