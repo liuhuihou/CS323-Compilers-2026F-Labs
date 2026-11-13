@@ -1,0 +1,9 @@
+int main() {
+	int a = 5;
+	int b = 6;
+	int c;
+    c = a - b;
+    c = c + 1;
+    c = c + 2;
+   return c == 2;
+}

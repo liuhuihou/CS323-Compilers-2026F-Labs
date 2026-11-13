@@ -1,67 +1,50 @@
 grammar Splc;
 
-program
-    : globalDef* EOF
-    ;
+// ---------- parser ----------
+program : function EOF ;
 
-globalDef
-    : specifier Identifier LPAREN funcArgs RPAREN LBRACE statement* RBRACE      // 函数定义
-    | specifier varDec SEMI                                                  // 全局变量定义
-    ;
+function : INT Identifier LPAREN RPAREN block ;
 
-varDec
-    : Identifier
-    | varDec LBRACK NUMBER RBRACK
-    ;
+block   : LBRACE stmt* RBRACE ;
 
-specifier
-    : INT
-    | CHAR
-    | VOID
-    ;
+stmt    : varDecl SEMI
+        | assign  SEMI
+        | retStmt SEMI
+        ;
 
-funcArgs
-    : (specifier Identifier (COMMA specifier Identifier)*)?
-    ;
+varDecl : INT Identifier (ASSIGN expr)? ;
+assign  : Identifier ASSIGN expr ;
+retStmt : RETURN expr ;
 
-statement
-    : LBRACE statement* RBRACE                                      # CombineStmt
-    | specifier varDec (ASSIGN expression)? SEMI                    # LocalVariableStmt
-    | RETURN expression SEMI                                        # ReturnStmt
-    | expression SEMI                                               # ExpressionStmt
-    ;
-
-expression
-    : LPAREN expression RPAREN
-    | Identifier
-    | NUMBER
-    | CHAR_VALUE
-    | expression LBRACK expression RBRACK
-    | expression (STAR | DIV ) expression
-    | expression (PLUS | MINUS) expression
-    | <assoc=right> expression ASSIGN expression
-    ;
+expr    : expr ( STAR | DIV) expr               # MulDiv
+        | expr ( PLUS|MINUS) expr               # AddSub
+        | expr (LE|GE|EQ|NEQ|LT|GT) expr        # Compare
+        | LPAREN expr RPAREN                    # Paren
+        | Identifier                            # Var
+        | NUMBER                                # Num
+        ;
 
 
-RETURN: 'return';
-ASSIGN: '=';
-PLUS: '+';
-MINUS: '-';
-STAR: '*';
-DIV: '/';
-SEMI: ';';
-COMMA: ',';
-LPAREN: '(';
-RPAREN: ')';
-LBRACE: '{';
-RBRACE: '}';
-LBRACK: '[';
-RBRACK: ']';
-INT: 'int';
-CHAR: 'char';
-VOID: 'void';
-Identifier : [a-zA-Z_] [a-zA-Z_0-9]* ;
-NUMBER       : [0-9]+ ;
-CHAR_VALUE: '\'' ( EscapeChar | ~['\\] ) '\'';
-fragment EscapeChar: '\\' ( 'n' | 't' | '\'' | '\\' | '0' );
-WS           : [ \t\r\n]+ -> skip ;
+RETURN  : 'return';
+ASSIGN  : '=';
+PLUS    : '+';
+MINUS   : '-';
+STAR    : '*';
+DIV     : '/';
+SEMI    : ';';
+COMMA   : ',';
+LE      : '<=';
+GE      : '>=';
+EQ      : '==';
+NEQ     : '!=';
+LT      : '<';
+GT      : '>';
+LPAREN  : '(';
+RPAREN  : ')';
+LBRACE  : '{';
+RBRACE  : '}';
+INT     : 'int';
+Identifier      : [a-zA-Z_] [a-zA-Z_0-9]* ;
+NUMBER          : [0-9]+ ;
+fragment EscapeChar : '\\' ( 'n' | 't' | '\'' | '\\' | '0' );
+WS              : [ \t\r\n]+ -> skip ;
